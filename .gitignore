@@ -1,0 +1,11 @@
+.idea/
+.vs/
+.vscode/
+build/
+cmake/open-cpp-coverage.cmake
+cmake-build-*/
+prefix/
+tools/parse/CMakePresets.json
+tools/prefix/
+CMakeLists.txt.user
+CMakeUserPresets.json

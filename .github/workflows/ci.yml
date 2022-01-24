@@ -1,0 +1,47 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+    - master
+
+  pull_request:
+    branches:
+    - master
+
+env:
+  PWSH_PWD: '$((Get-Location) -replace "\\", "/")'
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [macos, ubuntu, windows]
+
+    runs-on: ${{ matrix.os }}-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Parse
+      shell: pwsh
+      # Copy presets to reuse flags
+      run: cp CMakePresets.json tools/parse
+        && cmake -S tools/parse -B build/parse --preset=ci-${{ matrix.os }}
+        -D "CMAKE_INSTALL_PREFIX=${{ env.PWSH_PWD }}/tools/prefix"
+        && cmake --build build/parse --config Release --target install
+
+    - name: Configure
+      shell: pwsh
+      run: cmake --preset=ci-${{ matrix.os }} -B build/main
+        -D "CMAKE_PREFIX_PATH=${{ env.PWSH_PWD }}/tools/prefix"
+
+    - name: Build
+      run: cmake --build build/main --config Release -j 2
+
+    - name: Install
+      run: cmake --install build/main --config Release --prefix prefix
+
+    - name: Test
+      working-directory: build/main
+      run: ctest --output-on-failure -C Release -j 2
